@@ -11,7 +11,7 @@ import {
   LogOut,
   Users,
   UserCircle2,
-  Cake,
+  CalendarDays,
   Clock3,
 } from "lucide-react";
 import { useAuth } from "@/lib/auth/auth-provider";
@@ -23,7 +23,7 @@ const employeeLinks = [
   { href: "/dashboard", label: "Dashboard", icon: LayoutDashboard },
   { href: "/attendance", label: "Attendance", icon: Clock3 },
   { href: "/leave", label: "Leave", icon: CalendarCheck2 },
-  { href: "/birthdays", label: "Birthdays", icon: Cake },
+  { href: "/events", label: "Event", icon: CalendarDays },
   { href: "/policies", label: "Policies", icon: FileText },
   { href: "/profile", label: "Profile", icon: UserCircle2 },
 ];

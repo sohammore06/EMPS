@@ -60,3 +60,7 @@ def birthday_this_year(dob: date, year: int | None = None) -> date:
     except ValueError:
         # Feb 29 -> Feb 28 on non-leap years
         return date(y, 2, 28)
+
+
+def years_elapsed(original: date, on_date: date) -> int:
+    return max(on_date.year - original.year, 0)

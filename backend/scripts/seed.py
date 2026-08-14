@@ -45,6 +45,7 @@ TEST_USERS = [
         "last_name": "Admin",
         "employee_code": "SA001",
         "roles": ["SUPERADMIN"],
+        "date_of_joining": date(2018, 1, 15),
     },
     {
         "email": "hr@intellifysolutions.com",
@@ -52,6 +53,7 @@ TEST_USERS = [
         "last_name": "HR",
         "employee_code": "HR001",
         "roles": ["HR", "EMPLOYEE"],
+        "date_of_joining": date(2020, 3, 10),
     },
     {
         "email": "sohammore@intellifysolutions.com",
@@ -60,6 +62,7 @@ TEST_USERS = [
         "employee_code": "EMP001",
         "roles": ["EMPLOYEE"],
         "date_of_birth": date(1998, 8, 7),
+        "date_of_joining": date(2022, 8, 20),
         "seed_leave_balances": True,
     },
 ]
@@ -187,7 +190,7 @@ def seed() -> None:
                     last_name=spec.get("last_name"),
                     password_hash=password_hash,
                     employment_status="Active",
-                    date_of_joining=date.today(),
+                    date_of_joining=spec.get("date_of_joining") or date.today(),
                     date_of_birth=spec.get("date_of_birth"),
                     work_shift_id=shift.id,
                     is_microsoft_account=False,
@@ -207,6 +210,8 @@ def seed() -> None:
                     user.work_shift_id = shift.id
                 if spec.get("date_of_birth") and not user.date_of_birth:
                     user.date_of_birth = spec["date_of_birth"]
+                if spec.get("date_of_joining"):
+                    user.date_of_joining = spec["date_of_joining"]
                 print(f"Updated local login for: {email}")
 
             for role_name in spec["roles"]:

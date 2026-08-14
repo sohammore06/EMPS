@@ -181,6 +181,49 @@ class BirthdayOut(BaseModel):
     birthday_this_year: date
 
 
+class BirthdayEmployeeOut(BaseModel):
+    id: str
+    name: str
+    email: str
+    employee_code: Optional[str] = None
+    department: Optional[str] = None
+    designation: Optional[str] = None
+    date_of_birth: Optional[date] = None
+
+
+class BirthdayUpsert(BaseModel):
+    date_of_birth: date
+
+
+class CalendarEventOut(BaseModel):
+    id: str
+    user_id: str
+    name: str
+    email: str
+    department: Optional[str] = None
+    designation: Optional[str] = None
+    event_type: str
+    event_date: date
+    occurs_on: date
+    years: int
+
+
+class EventEmployeeOut(BaseModel):
+    id: str
+    name: str
+    email: str
+    employee_code: Optional[str] = None
+    department: Optional[str] = None
+    designation: Optional[str] = None
+    date_of_birth: Optional[date] = None
+    date_of_joining: Optional[date] = None
+
+
+class EventUpsert(BaseModel):
+    event_type: str = Field(..., pattern="^(BIRTHDAY|WORK_ANNIVERSARY)$")
+    event_date: date
+
+
 class PolicyOut(BaseModel):
     id: str
     title: str

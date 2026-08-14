@@ -59,7 +59,14 @@ class Settings(BaseSettings):
 
     @property
     def cors_origins_list(self) -> list[str]:
-        return [o.strip() for o in self.CORS_ORIGINS.split(",") if o.strip()]
+        origins = [o.strip() for o in self.CORS_ORIGINS.split(",") if o.strip()]
+        aliases: list[str] = []
+        for origin in origins:
+            if "://localhost" in origin:
+                aliases.append(origin.replace("://localhost", "://127.0.0.1"))
+            elif "://127.0.0.1" in origin:
+                aliases.append(origin.replace("://127.0.0.1", "://localhost"))
+        return list(dict.fromkeys(origins + aliases))
 
     @property
     def azure_authority(self) -> str:
