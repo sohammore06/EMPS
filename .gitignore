@@ -1,0 +1,28 @@
+# Python
+__pycache__/
+*.py[cod]
+.venv/
+venv/
+.env
+*.egg-info/
+
+# Node
+node_modules/
+.next/
+frontend/.env.local
+frontend/tsconfig.tsbuildinfo
+
+# Local demo DB
+*.db
+*.sqlite
+*.sqlite3
+
+# Uploads
+backend/uploads/**
+!backend/uploads/.gitkeep
+
+# IDE / OS
+.DS_Store
+.idea/
+.vscode/
+*.log

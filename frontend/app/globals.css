@@ -1,0 +1,177 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+:root {
+  /* Brand tokens — Premium Blue + White */
+  --brand-primary: #0163ce;
+  --brand-primary-hover: #015cc9;
+  --brand-primary-active: #0053c0;
+  --brand-primary-deep: #004ebc;
+  --surface-primary: #ffffff;
+  --surface-secondary: #f5f8fc;
+  --surface-muted: #eef3fa;
+  --text-primary: #0f172a;
+  --text-secondary: #64748b;
+  --text-on-primary: #ffffff;
+  --border-subtle: #e2e8f0;
+  --border-brand: #0163ce;
+  --focus-brand: #0163ce;
+  --shadow-soft: 0 1px 3px rgba(15, 23, 42, 0.06);
+
+  /* Mapped semantic tokens (HSL for Tailwind alpha support) */
+  --background: 214 60% 98%;
+  --foreground: 222 47% 11%;
+  --card: 0 0% 100%;
+  --card-foreground: 222 47% 11%;
+  --primary: 211 99% 41%;
+  --primary-foreground: 0 0% 100%;
+  --secondary: 214 55% 96%;
+  --secondary-foreground: 222 47% 16%;
+  --muted: 214 40% 95%;
+  --muted-foreground: 215 16% 42%;
+  --accent: 211 99% 41%;
+  --accent-foreground: 0 0% 100%;
+  --destructive: 0 72% 51%;
+  --destructive-foreground: 0 0% 100%;
+  --border: 214 32% 90%;
+  --input: 214 32% 88%;
+  --ring: 211 99% 41%;
+  --radius: 0.625rem;
+  --radius-sm: 0.5rem;
+  --radius-lg: 0.875rem;
+}
+
+* {
+  @apply border-border;
+}
+
+body {
+  @apply bg-background text-foreground antialiased;
+  background-color: var(--surface-secondary);
+  background-image: radial-gradient(circle at top left, rgba(1, 99, 206, 0.05), transparent 42%);
+  min-height: 100vh;
+}
+
+@layer components {
+  .page-title {
+    @apply text-3xl font-semibold tracking-tight text-foreground;
+  }
+
+  .page-subtitle {
+    @apply mt-1 text-sm text-muted-foreground;
+  }
+
+  .data-table {
+    @apply w-full text-sm;
+  }
+
+  .data-table thead {
+    @apply border-b bg-[var(--surface-muted)] text-left text-xs font-semibold uppercase tracking-wide text-muted-foreground;
+  }
+
+  .data-table th {
+    @apply px-4 py-3;
+  }
+
+  .data-table td {
+    @apply px-4 py-3;
+  }
+
+  .data-table tbody tr {
+    @apply border-b border-[var(--border-subtle)] transition-colors duration-200 hover:bg-[var(--surface-muted)];
+  }
+
+  .brand-gradient {
+    background: linear-gradient(135deg, #0163ce 0%, #015cc9 35%, #0053c0 70%, #004ebc 100%);
+  }
+
+  .form-select {
+    @apply h-10 w-full rounded-md border bg-white px-3 text-sm shadow-soft transition-all duration-200 focus:outline-none focus:ring-2;
+    border-color: var(--border-subtle);
+  }
+
+  .form-select:focus {
+    border-color: var(--brand-primary);
+    --tw-ring-color: rgba(1, 99, 206, 0.2);
+  }
+
+  /* Birthdays — celebratory (still brand-blue based) */
+  .birthday-hero {
+    background: linear-gradient(135deg, #0163ce 0%, #015cc9 40%, #0053c0 75%, #004ebc 100%);
+  }
+
+  .birthday-confetti {
+    pointer-events: none;
+    position: absolute;
+    inset: 0;
+    background-image:
+      radial-gradient(circle at 12% 28%, rgba(255, 255, 255, 0.35) 0 3px, transparent 4px),
+      radial-gradient(circle at 28% 72%, rgba(255, 255, 255, 0.28) 0 2px, transparent 3px),
+      radial-gradient(circle at 48% 22%, rgba(191, 216, 246, 0.55) 0 3px, transparent 4px),
+      radial-gradient(circle at 68% 58%, rgba(255, 255, 255, 0.32) 0 2px, transparent 3px),
+      radial-gradient(circle at 84% 34%, rgba(191, 216, 246, 0.5) 0 3px, transparent 4px),
+      radial-gradient(circle at 90% 78%, rgba(255, 255, 255, 0.25) 0 2px, transparent 3px);
+    animation: confetti-drift 8s linear infinite;
+  }
+
+  .birthday-candle {
+    transform-origin: center bottom;
+    animation: candle-sway 2.4s ease-in-out infinite;
+  }
+
+  .birthday-flame {
+    animation: flame-flicker 0.9s ease-in-out infinite;
+    transform-origin: center;
+  }
+
+  .birthday-balloon {
+    animation: balloon-float 3.2s ease-in-out infinite;
+  }
+
+  @keyframes confetti-drift {
+    0% {
+      transform: translateY(0);
+      opacity: 0.9;
+    }
+    50% {
+      opacity: 1;
+    }
+    100% {
+      transform: translateY(10px);
+      opacity: 0.9;
+    }
+  }
+
+  @keyframes candle-sway {
+    0%,
+    100% {
+      transform: rotate(-2deg);
+    }
+    50% {
+      transform: rotate(2deg);
+    }
+  }
+
+  @keyframes flame-flicker {
+    0%,
+    100% {
+      transform: scale(1);
+      opacity: 0.95;
+    }
+    50% {
+      transform: scale(1.15) translateY(-1px);
+      opacity: 1;
+    }
+  }
+
+  @keyframes balloon-float {
+    0%,
+    100% {
+      transform: translateY(0);
+    }
+    50% {
+      transform: translateY(-8px);
+    }
+  }
+}
