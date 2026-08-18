@@ -5,7 +5,7 @@ from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.staticfiles import StaticFiles
 
-from app.api import attendance, auth, birthdays, dashboard, events, leave, policies, users
+from app.api import attendance, auth, birthdays, dashboard, events, holidays, leave, policies, skills, users
 from app.core.config import get_settings
 
 settings = get_settings()
@@ -49,6 +49,8 @@ app.include_router(attendance.router, prefix=api_prefix)
 app.include_router(leave.router, prefix=api_prefix)
 app.include_router(birthdays.router, prefix=api_prefix)
 app.include_router(events.router, prefix=api_prefix)
+app.include_router(holidays.router, prefix=api_prefix)
+app.include_router(skills.router, prefix=api_prefix)
 app.include_router(policies.router, prefix=api_prefix)
 app.include_router(dashboard.router, prefix=api_prefix)
 

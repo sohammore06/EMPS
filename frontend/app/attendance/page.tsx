@@ -73,7 +73,9 @@ function AttendanceContent() {
           <CardTitle>Check in / Check out</CardTitle>
         </CardHeader>
         <CardContent className="flex flex-wrap items-center gap-3">
-          {!today.data?.check_in_time ? (
+          {today.data?.status === "HOLIDAY" && !today.data?.check_in_time ? (
+            <Badge variant="secondary">Holiday{today.data.notes ? ` · ${today.data.notes}` : ""}</Badge>
+          ) : !today.data?.check_in_time ? (
             <>
               <Button onClick={() => checkIn.mutate("OFFICE")}>Office</Button>
               <Button variant="accent" onClick={() => checkIn.mutate("WFH")}>

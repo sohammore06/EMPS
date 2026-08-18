@@ -1,6 +1,8 @@
 "use client";
 
 import { useState } from "react";
+import Link from "next/link";
+import { useRouter } from "next/navigation";
 import { useQuery } from "@tanstack/react-query";
 import { Protected } from "@/components/layout/protected";
 import { api } from "@/lib/api";
@@ -16,6 +18,7 @@ export default function EmployeesPage() {
 }
 
 function EmployeesContent() {
+  const router = useRouter();
   const [q, setQ] = useState("");
   const employees = useQuery({
     queryKey: ["directory", q],
@@ -27,7 +30,7 @@ function EmployeesContent() {
     <div className="space-y-6">
       <header>
         <h1 className="page-title">Employee directory</h1>
-        <p className="text-muted-foreground">Browse employees registered in EPMS</p>
+        <p className="text-muted-foreground">Browse employees and open a profile to view details</p>
       </header>
       <div className="max-w-md space-y-1">
         <Label>Search</Label>
@@ -57,9 +60,21 @@ function EmployeesContent() {
                   designation?: string;
                   employment_status?: string;
                 }) => (
-                  <tr key={e.id} className="border-b">
+                  <tr
+                    key={e.id}
+                    className="cursor-pointer border-b hover:bg-surface-muted"
+                    onClick={() => router.push(`/admin/employees/${e.id}`)}
+                  >
                     <td className="px-4 py-3">{e.employee_code || "—"}</td>
-                    <td className="px-4 py-3">{e.name}</td>
+                    <td className="px-4 py-3">
+                      <Link
+                        href={`/admin/employees/${e.id}`}
+                        className="font-medium text-brand hover:underline"
+                        onClick={(event) => event.stopPropagation()}
+                      >
+                        {e.name}
+                      </Link>
+                    </td>
                     <td className="px-4 py-3">{e.email}</td>
                     <td className="px-4 py-3">{e.department || "—"}</td>
                     <td className="px-4 py-3">{e.designation || "—"}</td>

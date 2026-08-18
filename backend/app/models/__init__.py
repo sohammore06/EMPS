@@ -11,6 +11,7 @@ from app.models.org import (
     SystemSetting,
 )
 from app.models.policy import Certification, CertificationCategory, Holiday, Policy
+from app.models.skill import Skill, UserSkill
 from app.models.user import Permission, Role, RolePermission, User, UserPermission, UserRole
 
 __all__ = [
@@ -38,4 +39,6 @@ __all__ = [
     "Certification",
     "CertificationCategory",
     "Holiday",
+    "Skill",
+    "UserSkill",
 ]
