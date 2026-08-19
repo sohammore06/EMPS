@@ -13,6 +13,8 @@ ROOT = Path(__file__).resolve().parents[1]
 if str(ROOT) not in sys.path:
     sys.path.insert(0, str(ROOT))
 
+from sqlalchemy import inspect
+
 from app.core.config import get_settings
 from app.core.database import Base, SessionLocal, engine
 from app.core.security import hash_password
@@ -20,7 +22,10 @@ import app.models  # noqa: F401
 from app.models.attendance import WorkShift
 from app.models.leave import EmployeeLeaveBalance, LeaveType
 from app.models.org import SystemSetting
+from app.models.policy import Holiday
+from app.models.skill import Skill
 from app.models.user import Role, User, UserRole
+from app.services.settings_service import ensure_default_settings
 
 
 ROLES = [
@@ -45,6 +50,7 @@ TEST_USERS = [
         "last_name": "Admin",
         "employee_code": "SA001",
         "roles": ["SUPERADMIN"],
+        "date_of_joining": date(2018, 1, 15),
     },
     {
         "email": "hr@intellifysolutions.com",
@@ -52,6 +58,7 @@ TEST_USERS = [
         "last_name": "HR",
         "employee_code": "HR001",
         "roles": ["HR", "EMPLOYEE"],
+        "date_of_joining": date(2020, 3, 10),
     },
     {
         "email": "sohammore@intellifysolutions.com",
@@ -60,11 +67,62 @@ TEST_USERS = [
         "employee_code": "EMP001",
         "roles": ["EMPLOYEE"],
         "date_of_birth": date(1998, 8, 7),
+        "date_of_joining": date(2022, 8, 20),
         "seed_leave_balances": True,
     },
 ]
 
 LOCAL_PASSWORD = "Password@123"
+
+STANDARD_SKILLS = [
+    ("Python", "Technical"),
+    ("Java", "Technical"),
+    ("JavaScript", "Technical"),
+    ("TypeScript", "Technical"),
+    ("React", "Technical"),
+    ("Next.js", "Technical"),
+    ("Node.js", "Technical"),
+    ("SQL Server", "Technical"),
+    ("PostgreSQL", "Technical"),
+    ("FastAPI", "Technical"),
+    (".NET", "Technical"),
+    ("Azure", "Technical"),
+    ("AWS", "Technical"),
+    ("Docker", "Technical"),
+    ("Git", "Technical"),
+    ("Power BI", "Technical"),
+    ("Excel", "Technical"),
+    ("Communication", "Soft Skills"),
+    ("Leadership", "Soft Skills"),
+    ("Project Management", "Soft Skills"),
+    ("Mentoring", "Soft Skills"),
+    ("Recruitment", "HR"),
+    ("Payroll", "HR"),
+    ("Employee Relations", "HR"),
+]
+
+SAMPLE_HOLIDAYS = [
+    (date(2026, 8, 15), "Independence Day", "PUBLIC"),
+    (date(2026, 8, 27), "Ganesh Chaturthi", "FESTIVAL"),
+    (date(2026, 10, 2), "Gandhi Jayanti", "PUBLIC"),
+    (date(2026, 11, 8), "Diwali", "FESTIVAL"),
+    (date(2026, 12, 25), "Christmas", "PUBLIC"),
+]
+
+
+def _ensure_holidays_schema() -> None:
+    inspector = inspect(engine)
+    tables = {name.lower() for name in inspector.get_table_names()}
+    if "holidays" not in tables:
+        Holiday.__table__.create(bind=engine)
+        return
+    actual_name = next(name for name in inspector.get_table_names() if name.lower() == "holidays")
+    columns = {col["name"] for col in inspector.get_columns(actual_name)}
+    if {"holiday_id", "holiday_name", "holiday_type", "holiday_date"} <= columns:
+        return
+    Holiday.__table__.drop(bind=engine)
+    Holiday.__table__.create(bind=engine)
+    print("Recreated Holidays table to match dbo.Holidays")
 
 
 def _ensure_role(db, role_name: str) -> Role:
@@ -117,9 +175,11 @@ def seed() -> None:
     settings = get_settings()
     if settings.USE_SQLITE:
         Base.metadata.create_all(bind=engine)
+        _ensure_holidays_schema()
 
     db = SessionLocal()
     try:
+        ensure_default_settings(db)
         for name, desc in ROLES:
             exists = db.query(Role).filter(Role.name == name).first()
             if not exists:
@@ -187,7 +247,7 @@ def seed() -> None:
                     last_name=spec.get("last_name"),
                     password_hash=password_hash,
                     employment_status="Active",
-                    date_of_joining=date.today(),
+                    date_of_joining=spec.get("date_of_joining") or date.today(),
                     date_of_birth=spec.get("date_of_birth"),
                     work_shift_id=shift.id,
                     is_microsoft_account=False,
@@ -207,6 +267,8 @@ def seed() -> None:
                     user.work_shift_id = shift.id
                 if spec.get("date_of_birth") and not user.date_of_birth:
                     user.date_of_birth = spec["date_of_birth"]
+                if spec.get("date_of_joining"):
+                    user.date_of_joining = spec["date_of_joining"]
                 print(f"Updated local login for: {email}")
 
             for role_name in spec["roles"]:
@@ -229,6 +291,30 @@ def seed() -> None:
             manager_role = _ensure_role(db, "MANAGER")
             _ensure_user_role(db, hr.id, manager_role.id)
             print("Set hr@ as reporting manager for sohammore@")
+
+        for skill_name, category in STANDARD_SKILLS:
+            exists = db.query(Skill).filter(Skill.name == skill_name).first()
+            if not exists:
+                db.add(
+                    Skill(
+                        id=str(uuid4()),
+                        name=skill_name,
+                        category=category,
+                        is_active=True,
+                    )
+                )
+
+        if db.query(Holiday).count() == 0:
+            for holiday_date, holiday_name, holiday_type in SAMPLE_HOLIDAYS:
+                db.add(
+                    Holiday(
+                        holiday_date=holiday_date,
+                        holiday_name=holiday_name,
+                        holiday_type=holiday_type,
+                        created_date=datetime.utcnow(),
+                    )
+                )
+            print("Seeded sample holidays")
 
         db.commit()
         print("Seed completed.")

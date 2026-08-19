@@ -13,6 +13,7 @@ from app.models.attendance import AttendanceRecord
 from app.models.user import User
 from app.schemas import AttendanceOut, AttendanceSummary, CheckInRequest, CheckOutRequest, MessageOut
 from app.services.audit_service import log_audit
+from app.services.holiday_service import holiday_on, holidays_in_range
 from app.utils.helpers import calculate_overtime, calculate_worked_minutes, get_user_shift
 
 router = APIRouter(prefix="/attendance", tags=["attendance"])
@@ -132,12 +133,26 @@ def today_attendance(
     current: Annotated[CurrentUser, Depends(get_current_user)],
     db: Annotated[Session, Depends(get_db)],
 ):
+    today = date.today()
     rec = (
         db.query(AttendanceRecord)
-        .filter(AttendanceRecord.user_id == current.id, AttendanceRecord.attendance_date == date.today())
+        .filter(AttendanceRecord.user_id == current.id, AttendanceRecord.attendance_date == today)
         .first()
     )
-    return _to_out(rec, current.user.full_name) if rec else None
+    if rec:
+        return _to_out(rec, current.user.full_name)
+    holiday = holiday_on(db, today)
+    if holiday:
+        return AttendanceOut(
+            id=f"holiday-{holiday.holiday_id}",
+            user_id=current.id,
+            attendance_date=today,
+            work_mode=None,
+            status="HOLIDAY",
+            notes=holiday.holiday_name,
+            employee_name=current.user.full_name,
+        )
+    return None
 
 
 @router.get("/me", response_model=AttendanceSummary)
@@ -161,7 +176,28 @@ def my_attendance(
         .all()
     )
 
+    recorded_dates = {r.attendance_date for r in records}
+    month_end = end - date.resolution
+    holiday_rows = holidays_in_range(db, start, month_end)
     outs = [_to_out(r) for r in records]
+    for holiday in holiday_rows:
+        if holiday.holiday_date in recorded_dates:
+            continue
+        if holiday.holiday_date > date.today() and holiday.holiday_date.month == month:
+            # still show future holidays in the current/selected month
+            pass
+        outs.append(
+            AttendanceOut(
+                id=f"holiday-{holiday.holiday_id}",
+                user_id=current.id,
+                attendance_date=holiday.holiday_date,
+                work_mode=None,
+                status="HOLIDAY",
+                notes=holiday.holiday_name,
+                employee_name=current.user.full_name,
+            )
+        )
+    outs.sort(key=lambda item: item.attendance_date)
     return AttendanceSummary(
         records=outs,
         total_worked_minutes=sum(r.total_minutes_worked or 0 for r in records),
@@ -169,6 +205,7 @@ def my_attendance(
         present_count=sum(1 for r in records if r.work_mode == "OFFICE" and r.status == "PRESENT"),
         wfh_count=sum(1 for r in records if r.work_mode == "WFH"),
         leave_count=sum(1 for r in records if r.status == "LEAVE"),
+        holiday_count=sum(1 for item in outs if item.status == "HOLIDAY"),
     )
 
 

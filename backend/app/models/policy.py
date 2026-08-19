@@ -50,10 +50,12 @@ class Policy(Base):
 
 
 class Holiday(Base):
+    """Maps to existing dbo.Holidays — do not create a duplicate table."""
+
     __tablename__ = "Holidays"
 
-    id: Mapped[str] = mapped_column(String(36), primary_key=True)
-    name: Mapped[str] = mapped_column(String(150), nullable=False)
+    holiday_id: Mapped[int] = mapped_column(Integer, primary_key=True, autoincrement=True)
     holiday_date: Mapped[date] = mapped_column(Date, nullable=False)
-    description: Mapped[Optional[str]] = mapped_column(Text, nullable=True)
-    is_optional: Mapped[Optional[bool]] = mapped_column(Boolean, default=False)
+    holiday_name: Mapped[str] = mapped_column(String(255), nullable=False)
+    holiday_type: Mapped[str] = mapped_column(String(50), nullable=False)
+    created_date: Mapped[Optional[datetime]] = mapped_column(DateTime, nullable=True)

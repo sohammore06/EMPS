@@ -2,7 +2,7 @@ from datetime import date, datetime
 from decimal import Decimal
 from typing import Optional
 
-from pydantic import BaseModel, EmailStr, Field
+from pydantic import BaseModel, EmailStr, Field, field_validator
 
 
 class TokenResponse(BaseModel):
@@ -95,7 +95,7 @@ class AttendanceOut(BaseModel):
     id: str
     user_id: str
     attendance_date: date
-    work_mode: str
+    work_mode: Optional[str] = None
     check_in_time: Optional[datetime] = None
     check_out_time: Optional[datetime] = None
     total_minutes_worked: Optional[int] = None
@@ -112,6 +112,7 @@ class AttendanceSummary(BaseModel):
     present_count: int
     wfh_count: int
     leave_count: int
+    holiday_count: int = 0
 
 
 class LeaveTypeCreate(BaseModel):
@@ -181,6 +182,49 @@ class BirthdayOut(BaseModel):
     birthday_this_year: date
 
 
+class BirthdayEmployeeOut(BaseModel):
+    id: str
+    name: str
+    email: str
+    employee_code: Optional[str] = None
+    department: Optional[str] = None
+    designation: Optional[str] = None
+    date_of_birth: Optional[date] = None
+
+
+class BirthdayUpsert(BaseModel):
+    date_of_birth: date
+
+
+class CalendarEventOut(BaseModel):
+    id: str
+    user_id: str
+    name: str
+    email: str
+    department: Optional[str] = None
+    designation: Optional[str] = None
+    event_type: str
+    event_date: date
+    occurs_on: date
+    years: int
+
+
+class EventEmployeeOut(BaseModel):
+    id: str
+    name: str
+    email: str
+    employee_code: Optional[str] = None
+    department: Optional[str] = None
+    designation: Optional[str] = None
+    date_of_birth: Optional[date] = None
+    date_of_joining: Optional[date] = None
+
+
+class EventUpsert(BaseModel):
+    event_type: str = Field(..., pattern="^(BIRTHDAY|WORK_ANNIVERSARY)$")
+    event_date: date
+
+
 class PolicyOut(BaseModel):
     id: str
     title: str
@@ -221,6 +265,46 @@ class CertificationCreate(BaseModel):
     category_id: Optional[str] = None
 
 
+class SkillOut(BaseModel):
+    id: str
+    name: str
+    category: Optional[str] = None
+    is_active: bool = True
+
+
+class UserSkillOut(BaseModel):
+    id: str
+    skill_id: str
+    skill_name: str
+    skill_category: Optional[str] = None
+    proficiency: str
+    created_at: Optional[datetime] = None
+    updated_at: Optional[datetime] = None
+
+
+class UserSkillCreate(BaseModel):
+    skill_id: Optional[str] = None
+    custom_name: Optional[str] = Field(None, min_length=1, max_length=150)
+    proficiency: str = Field("INTERMEDIATE", pattern="^(BEGINNER|INTERMEDIATE|ADVANCED|EXPERT)$")
+
+    @field_validator("custom_name", mode="before")
+    @classmethod
+    def blank_custom_name(cls, value):
+        if isinstance(value, str) and not value.strip():
+            return None
+        return value
+
+
+class UserSkillBulkCreate(BaseModel):
+    skill_ids: list[str] = []
+    custom_names: list[str] = []
+    proficiency: str = Field("INTERMEDIATE", pattern="^(BEGINNER|INTERMEDIATE|ADVANCED|EXPERT)$")
+
+
+class UserSkillUpdate(BaseModel):
+    proficiency: str = Field(..., pattern="^(BEGINNER|INTERMEDIATE|ADVANCED|EXPERT)$")
+
+
 class CertificationUpdate(BaseModel):
     name: Optional[str] = None
     issuing_organization: Optional[str] = None
@@ -231,6 +315,26 @@ class CertificationUpdate(BaseModel):
     category_id: Optional[str] = None
 
 
+class HolidayOut(BaseModel):
+    holiday_id: int
+    holiday_date: date
+    holiday_name: str
+    holiday_type: str
+    created_date: Optional[datetime] = None
+
+
+class HolidayCreate(BaseModel):
+    holiday_date: date
+    holiday_name: str = Field(..., min_length=1, max_length=255)
+    holiday_type: str = Field(..., min_length=1, max_length=50)
+
+
+class HolidayUpdate(BaseModel):
+    holiday_date: Optional[date] = None
+    holiday_name: Optional[str] = Field(None, min_length=1, max_length=255)
+    holiday_type: Optional[str] = Field(None, min_length=1, max_length=50)
+
+
 class HRDashboard(BaseModel):
     total_employees: int
     present_today: int
@@ -238,6 +342,7 @@ class HRDashboard(BaseModel):
     employees_on_leave_today: int
     today_birthdays: int
     pending_leave_requests: int
+    upcoming_holidays: list[HolidayOut] = []
 
 
 class ManagerDashboard(BaseModel):
@@ -246,6 +351,7 @@ class ManagerDashboard(BaseModel):
     wfh_today: int
     on_leave_today: int
     pending_leave_requests: int
+    upcoming_holidays: list[HolidayOut] = []
 
 
 class EmployeeDashboard(BaseModel):
@@ -256,6 +362,9 @@ class EmployeeDashboard(BaseModel):
     pending_leaves: int
     upcoming_birthdays: int
     month_worked_minutes: int
+    is_holiday_today: bool = False
+    today_holiday_name: Optional[str] = None
+    upcoming_holidays: list[HolidayOut] = []
 
 
 class NotificationOut(BaseModel):

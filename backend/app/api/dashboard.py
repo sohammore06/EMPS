@@ -11,11 +11,22 @@ from app.core.deps import CurrentUser, get_current_user, require_roles
 from app.models.attendance import AttendanceRecord
 from app.models.leave import EmployeeLeaveBalance, LeaveRequest
 from app.models.user import User
-from app.schemas import EmployeeDashboard, HRDashboard, ManagerDashboard, NotificationOut
+from app.schemas import EmployeeDashboard, HolidayOut, HRDashboard, ManagerDashboard, NotificationOut
 from app.models.org import Notification
+from app.services.holiday_service import holiday_on, upcoming_holidays
 from app.utils.helpers import birthday_this_year
 
 router = APIRouter(tags=["dashboard"])
+
+
+def _holiday_out(row) -> HolidayOut:
+    return HolidayOut(
+        holiday_id=row.holiday_id,
+        holiday_date=row.holiday_date,
+        holiday_name=row.holiday_name,
+        holiday_type=row.holiday_type,
+        created_date=row.created_date,
+    )
 
 
 @router.get("/dashboard/hr", response_model=HRDashboard)
@@ -72,6 +83,7 @@ def hr_dashboard(
         employees_on_leave_today=on_leave,
         today_birthdays=birthday_count,
         pending_leave_requests=pending,
+        upcoming_holidays=[_holiday_out(row) for row in upcoming_holidays(db, limit=5)],
     )
 
 
@@ -94,6 +106,7 @@ def manager_dashboard(
             wfh_today=0,
             on_leave_today=0,
             pending_leave_requests=0,
+            upcoming_holidays=[_holiday_out(row) for row in upcoming_holidays(db, limit=5)],
         )
 
     present = (
@@ -139,6 +152,7 @@ def manager_dashboard(
         wfh_today=wfh,
         on_leave_today=on_leave,
         pending_leave_requests=pending,
+        upcoming_holidays=[_holiday_out(row) for row in upcoming_holidays(db, limit=5)],
     )
 
 
@@ -183,6 +197,7 @@ def employee_dashboard(
         .scalar()
     )
 
+    today_holiday = holiday_on(db, today)
     return EmployeeDashboard(
         checked_in_today=bool(att and att.check_in_time),
         checked_out_today=bool(att and att.check_out_time),
@@ -191,6 +206,9 @@ def employee_dashboard(
         pending_leaves=pending,
         upcoming_birthdays=upcoming,
         month_worked_minutes=int(worked or 0),
+        is_holiday_today=bool(today_holiday),
+        today_holiday_name=today_holiday.holiday_name if today_holiday else None,
+        upcoming_holidays=[_holiday_out(row) for row in upcoming_holidays(db, limit=5)],
     )
 
 

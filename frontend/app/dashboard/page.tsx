@@ -81,7 +81,9 @@ function DashboardContent() {
           <CardDescription>Check in and out for the day</CardDescription>
         </CardHeader>
         <CardContent className="flex flex-wrap items-center gap-3">
-          {d?.checked_in_today ? (
+          {d?.is_holiday_today && !d?.checked_in_today ? (
+            <Badge variant="secondary">Holiday{d.today_holiday_name ? ` · ${d.today_holiday_name}` : ""}</Badge>
+          ) : d?.checked_in_today ? (
             <Badge variant="success">
               Checked in{d.today_work_mode ? ` · ${d.today_work_mode}` : ""}
             </Badge>
@@ -110,6 +112,36 @@ function DashboardContent() {
         <Stat title="Month worked" value={d ? formatMinutes(d.month_worked_minutes || 0) : "—"} />
         <Stat title="Birthdays this week" value={String(d?.upcoming_birthdays ?? "—")} />
       </div>
+
+      <Card>
+        <CardHeader>
+          <CardTitle>Upcoming Holidays</CardTitle>
+          <CardDescription>
+            <Link href="/holidays" className="text-primary underline-offset-4 hover:underline">
+              Open holiday calendar
+            </Link>
+          </CardDescription>
+        </CardHeader>
+        <CardContent className="space-y-2">
+          {(d?.upcoming_holidays || []).map(
+            (holiday: { holiday_id: number; holiday_date: string; holiday_name: string; holiday_type: string }) => (
+              <div key={holiday.holiday_id} className="flex items-center justify-between rounded-md border border-[var(--border-subtle)] px-3 py-2">
+                <p className="font-medium">{holiday.holiday_name}</p>
+                <p className="text-sm text-muted-foreground">
+                  {(() => {
+                    const [y, m, day] = holiday.holiday_date.split("-").map(Number);
+                    return new Date(y, m - 1, day).toLocaleDateString(undefined, { day: "2-digit", month: "short" });
+                  })()}
+                  <span className="ml-2 text-xs uppercase">{holiday.holiday_type}</span>
+                </p>
+              </div>
+            )
+          )}
+          {!d?.upcoming_holidays?.length && (
+            <p className="text-sm text-muted-foreground">No upcoming holidays</p>
+          )}
+        </CardContent>
+      </Card>
 
       {isManager && manager.data && (
         <Card>

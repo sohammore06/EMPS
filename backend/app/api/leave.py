@@ -23,7 +23,7 @@ from app.schemas import (
 )
 from app.services.audit_service import log_audit
 from app.services.notification_service import NotificationService
-from app.utils.helpers import leave_days
+from app.services.holiday_service import calculate_leave_days
 
 router = APIRouter(prefix="/leave", tags=["leave"])
 
@@ -192,7 +192,12 @@ async def apply_leave(
     if overlap:
         raise HTTPException(status_code=400, detail="Overlapping leave request exists")
 
-    days = leave_days(body.from_date, body.to_date, body.is_half_day)
+    days = calculate_leave_days(db, body.from_date, body.to_date, body.is_half_day)
+    if days <= 0:
+        raise HTTPException(
+            status_code=400,
+            detail="Selected dates contain no chargeable working days after weekends and holidays",
+        )
     if lt.code != "LOP":
         bal = (
             db.query(EmployeeLeaveBalance)

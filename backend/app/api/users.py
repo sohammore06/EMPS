@@ -23,6 +23,7 @@ from app.schemas import (
     UserProfileUpdate,
 )
 from app.services.audit_service import log_audit
+from app.services.user_access import get_visible_user, user_role_names
 
 router = APIRouter(prefix="/users", tags=["users"])
 settings = get_settings()
@@ -222,3 +223,24 @@ def delete_certification(
     db.delete(cert)
     db.commit()
     return MessageOut(message="Certification deleted")
+
+
+@router.get("/{user_id}", response_model=UserProfile)
+def get_employee_profile(
+    user_id: str,
+    current: Annotated[CurrentUser, Depends(get_current_user)],
+    db: Annotated[Session, Depends(get_db)],
+):
+    user = get_visible_user(db, current, user_id)
+    return _profile(user, user_role_names(user) if user.id != current.id else current.roles)
+
+
+@router.get("/{user_id}/certifications", response_model=list[CertificationOut])
+def employee_certifications(
+    user_id: str,
+    current: Annotated[CurrentUser, Depends(get_current_user)],
+    db: Annotated[Session, Depends(get_db)],
+):
+    user = get_visible_user(db, current, user_id)
+    rows = db.query(Certification).filter(Certification.user_id == user.id).order_by(Certification.name).all()
+    return [CertificationOut.model_validate(r, from_attributes=True) for r in rows]
